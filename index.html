@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生産性計算アプリ</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        /* モバイルで見やすいシンプルなデザイン */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 18px;
+            color: #444;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px; 
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        .time-input-group {
+            display: flex;
+            gap: 10px; 
+        }
+        .time-input-group > div {
+            flex-basis: 50%; 
+        }
+        /* 計算ボタン */
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+        }
+        button:active {
+            background-color: #0056b3;
+            transform: translateY(2px);
+        }
+        
+        /* === 修正点: 結果エリアのスタイル === */
+        
+        /* 結果の項目一つ分 */
+        .result-item {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            /* 背景色を追加しました */
+            background-color: #e9f5ff; 
+            padding: 10px 15px; 
+            border-radius: 8px;
+            margin-bottom: 8px; 
+        }
+        
+        /* 項目名（左側） */
+        .result-label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            flex-shrink: 0; 
+        }
+
+        /* 値（右側） */
+        .result-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: right;
+        }
+        /* ================================== */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>売り上げ</h1>
+    
+    <div class="input-group">
+        <label for="amount">金額 (円)</label>
+        <input type="number" id="amount" inputmode="decimal" placeholder="例: 10000">
+    </div>
+
+    <div class="time-input-group">
+        <div>
+            <label for="hours">時間 (h)</label>
+            <input type="number" id="hours" inputmode="numeric" pattern="[0-9]*" placeholder="例: 5">
+        </div>
+        <div>
+            <label for="minutes">分 (min)</label>
+            <input type="number" id="minutes" inputmode="numeric" pattern="[0-9]*" placeholder="例: 30" max="59">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label for="count">件数 (件)</label>
+        <input type="number" id="count" inputmode="numeric" pattern="[0-9]*" placeholder="例: 50">
+    </div>
+
+    <button onclick="calculate()">計算する</button>
+
+    <h1>生産性</h1>
+
+    <div class="result-item">
+        <span class="result-label">時間収益</span>
+        <span id="result-earnings" class="result-value">--- 円</span>
+    </div>
+    
+    <div class="result-item">
+        <span class="result-label">時間当たり件数</span>
+        <span id="result-count" class="result-value">--- 件</span>
+    </div>
+    
+    <div class="result-item">
+        <span class="result-label">単価 (1件あたり)</span>
+        <span id="result-unit-price" class="result-value">--- 円</span>
+    </div>
+    
+</div>
+
+<script>
+    // PWA: サービスワーカーの登録 (変更なし)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        });
+    }
+
+    function calculate() {
+        // --- 1. 入力値の取得と変換 ---
+        const amountStr = document.getElementById('amount').value;
+        const hoursStr = document.getElementById('hours').value || '0'; 
+        const minutesStr = document.getElementById('minutes').value || '0'; 
+        const countStr = document.getElementById('count').value;
+
+        const amount = parseFloat(amountStr);
+        const hours = parseInt(hoursStr, 10);
+        const minutes = parseInt(minutesStr, 10);
+        const count = parseFloat(countStr);
+
+        const totalTime = hours + (minutes / 60);
+
+        // --- 2. バリデーション（入力チェック） ---
+        let errorMessage = "";
+        
+        if (isNaN(amount) || amount < 0) {
+            errorMessage += "・金額を正しく入力してください。\n";
+        }
+        if (totalTime <= 0) {
+            errorMessage += "・作業時間（hとmin）は、合計で0時間より大きい必要があります。\n";
+        }
+        if (isNaN(count) || count < 0) {
+            errorMessage += "・件数を正しく入力してください。\n";
+        }
+
+        if (errorMessage) {
+            alert("入力エラー:\n" + errorMessage);
+            return;
+        }
+
+        // --- 3. 計算処理 ---
+        const hourlyEarnings = Math.floor(amount / totalTime); 
+        const hourlyCount = (count / totalTime).toFixed(1);    
+        
+        let unitPrice = 0;
+        let unitPriceText = "--- 円"; 
+        
+        if (count > 0) {
+            unitPrice = Math.floor(amount / count);
+            unitPriceText = unitPrice.toLocaleString() + " 円";
+        } else {
+            unitPriceText = "--- (件数0)";
+        }
+
+        // --- 4. 結果の表示 ---
+        document.getElementById('result-earnings').textContent = hourlyEarnings.toLocaleString() + " 円";
+        document.getElementById('result-count').textContent = hourlyCount + " 件";
+        document.getElementById('result-unit-price').textContent = unitPriceText;
+    }
+</script>
+
+</body>
+</html>
