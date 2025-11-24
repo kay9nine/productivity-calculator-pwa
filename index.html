@@ -75,25 +75,37 @@
             background-color: #0056b3;
             transform: translateY(2px);
         }
-        /* 結果表示エリア */
-        .result-area {
-            background-color: #e9f5ff;
-            padding: 15px;
+        
+        /* === 修正点: 結果エリアのスタイル === */
+        
+        /* 結果の項目一つ分 */
+        .result-item {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            /* 背景色を追加しました */
+            background-color: #e9f5ff; 
+            padding: 15px; 
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px; 
         }
+        
+        /* 項目名（左側） */
         .result-label {
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
             color: #555;
+            flex-shrink: 0; 
         }
+
+        /* 値（右側） */
         .result-value {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #007bff;
             text-align: right;
-            display: block;
-            margin-top: 5px;
         }
+        /* ================================== */
     </style>
 </head>
 <body>
@@ -126,27 +138,27 @@
 
     <h1>生産性</h1>
 
-    <div class="result-area">
-        <div class="result-label">時間収益</div>
+    <div class="result-item">
+        <span class="result-label">時間収益</span>
         <span id="result-earnings" class="result-value">--- 円</span>
     </div>
-
-    <div class="result-area">
-        <div class="result-label">時間当たり件数</div>
+    
+    <div class="result-item">
+        <span class="result-label">時間当たり件数</span>
         <span id="result-count" class="result-value">--- 件</span>
     </div>
     
-    <div class="result-area">
-        <div class="result-label">単価 (1件あたり)</div>
+    <div class="result-item">
+        <span class="result-label">単価 (1件あたり)</span>
         <span id="result-unit-price" class="result-value">--- 円</span>
     </div>
+    
 </div>
 
 <script>
-    // PWA: サービスワーカーの登録 (PWAの機能に必要)
+    // PWA: サービスワーカーの登録 (変更なし)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // sw.js が同じフォルダにある必要があります
             navigator.serviceWorker.register('./sw.js')
                 .then(registration => {
                     console.log('SW registered: ', registration);
@@ -169,7 +181,6 @@
         const minutes = parseInt(minutesStr, 10);
         const count = parseFloat(countStr);
 
-        // 総作業時間の計算 (h)
         const totalTime = hours + (minutes / 60);
 
         // --- 2. バリデーション（入力チェック） ---
@@ -191,30 +202,23 @@
         }
 
         // --- 3. 計算処理 ---
-        
-        // 1. 時間収益 (時給換算)
         const hourlyEarnings = Math.floor(amount / totalTime); 
-        
-        // 2. 時間当たり件数
         const hourlyCount = (count / totalTime).toFixed(1);    
         
-        // 3. 単価 (金額 ÷ 件数) - 件数が0の場合は計算不可
         let unitPrice = 0;
+        let unitPriceText = "--- 円"; 
+        
         if (count > 0) {
             unitPrice = Math.floor(amount / count);
+            unitPriceText = unitPrice.toLocaleString() + " 円";
         } else {
-            // 件数が0の場合は、単価計算ができない旨をユーザーに通知
-            document.getElementById('result-unit-price').textContent = "--- (件数0)";
-            // 件数0の場合でも他の計算は有効なので、処理を続行
+            unitPriceText = "--- (件数0)";
         }
 
         // --- 4. 結果の表示 ---
         document.getElementById('result-earnings').textContent = hourlyEarnings.toLocaleString() + " 円";
         document.getElementById('result-count').textContent = hourlyCount + " 件";
-        
-        if (count > 0) {
-            document.getElementById('result-unit-price').textContent = unitPrice.toLocaleString() + " 円";
-        }
+        document.getElementById('result-unit-price').textContent = unitPriceText;
     }
 </script>
 
