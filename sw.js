@@ -3,6 +3,7 @@ const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
+  './app.js', // 追加
   // アイコンファイル（後述）
   './icon-192x192.png',
   './icon-512x512.png'
