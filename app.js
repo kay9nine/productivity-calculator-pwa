@@ -18,8 +18,8 @@ if ('serviceWorker' in navigator) {
 function calculate() {
     // --- 1. 入力値の取得と変換 ---
     const amountStr = document.getElementById('amount').value;
-    const hoursStr = document.getElementById('hours').value || '0'; 
-    const minutesStr = document.getElementById('minutes').value || '0'; 
+    const hoursStr = document.getElementById('hours').value || '0';
+    const minutesStr = document.getElementById('minutes').value || '0';
     const countStr = document.getElementById('count').value;
 
     const amount = parseFloat(amountStr);
@@ -32,7 +32,7 @@ function calculate() {
 
     // --- 2. バリデーション（入力チェック） ---
     let errorMessage = "";
-    
+
     if (isNaN(amount) || amount < 0) {
         errorMessage += "・金額を正しく入力してください。\n";
     }
@@ -50,13 +50,13 @@ function calculate() {
 
     // --- 3. 計算処理 ---
     // 時給 (小数点以下切り捨て)
-    const hourlyEarnings = Math.floor(amount / totalTime); 
+    const hourlyEarnings = Math.floor(amount / totalTime);
     // 時間当たり件数 (小数点第1位まで)
-    const hourlyCount = (count / totalTime).toFixed(1);    
-    
+    const hourlyCount = (count / totalTime).toFixed(1);
+
     let unitPrice = 0;
-    let unitPriceText = "--- 円"; 
-    
+    let unitPriceText = "--- 円";
+
     if (count > 0) {
         // 単価 (小数点以下切り捨て)
         unitPrice = Math.floor(amount / count);
@@ -77,7 +77,7 @@ function calculate() {
 // ===================================
 
 let startY = 0;
-const PULL_THRESHOLD = 50; // リフレッシュを起動するのに必要な最低ピクセル数
+const PULL_THRESHOLD = 150; // しきい値を上げて意図しない更新を防ぐ（150px）
 const indicator = document.getElementById('refresh-indicator');
 
 document.addEventListener('touchstart', (e) => {
@@ -99,19 +99,19 @@ document.addEventListener('touchmove', (e) => {
     if (distance > 0 && window.scrollY === 0) {
         // 下方向へのスワイプ
         e.preventDefault(); // ブラウザ標準の動作を抑止（iOS PWAでは効かない可能性もあるが念のため）
-        
+
         // インジケーターの表示/非表示を切り替え
+        const opacity = Math.min(distance / PULL_THRESHOLD, 1);
+        indicator.style.opacity = opacity;
+
+        // 少し引っ張っただけでは反応させない工夫
         if (distance > PULL_THRESHOLD) {
-            indicator.style.opacity = '1';
             indicator.textContent = '離すと更新';
+            indicator.style.backgroundColor = '#28a745'; // 色を変えて通知
         } else {
-            indicator.style.opacity = '0.5';
-            indicator.textContent = '下に引く';
+            indicator.textContent = '下に引いて更新';
+            indicator.style.backgroundColor = '#007bff';
         }
-        
-    } else if (distance < 0) {
-        // 上方向へのスワイプ（通常のスクロール）
-        indicator.style.opacity = '0';
     }
 }, { passive: false }); // preventDefaultを使う可能性があるため passive: false
 
@@ -126,9 +126,36 @@ document.addEventListener('touchend', (e) => {
 
     // 規定の距離以上引っ張られていたらページをリロードする
     if (distance > PULL_THRESHOLD) {
-        // ページを更新
         window.location.reload();
     }
 
     startY = 0;
 }, { passive: true });
+
+// ===================================
+// 入力値の自動保存 (LocalStorage)
+// ===================================
+
+const inputIds = ['amount', 'hours', 'minutes', 'count'];
+
+// 入力が変わるたびに保存
+inputIds.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        const val = document.getElementById(id).value;
+        localStorage.setItem(`productivity_${id}`, val);
+    });
+});
+
+// ページ読み込み時に復元
+window.addEventListener('load', () => {
+    inputIds.forEach(id => {
+        const savedVal = localStorage.getItem(`productivity_${id}`);
+        if (savedVal !== null) {
+            document.getElementById(id).value = savedVal;
+        }
+    });
+    // 復元後に一度計算を実行（値がある場合）
+    if (localStorage.getItem('productivity_amount')) {
+        calculate();
+    }
+});
