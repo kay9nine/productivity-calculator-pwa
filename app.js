@@ -73,22 +73,21 @@ function calculate() {
 
 
 // ===================================
-// iPhone PWA 向け 独自プル・トゥ・リフレッシュ機能
+// iPhone PWA 向け 独自プル・トゥ_リフレッシュ機能
 // ===================================
 
 let startY = 0;
-const PULL_THRESHOLD = 150; // しきい値を上げて意図しない更新を防ぐ（150px）
+const PULL_THRESHOLD = 100; // しきい値を100pxに調整
 const indicator = document.getElementById('refresh-indicator');
 
 document.addEventListener('touchstart', (e) => {
-    // スクロール位置が一番上の場合のみ動作させる
-    if (window.scrollY === 0) {
+    // スクロール位置が一番上付近（誤差5px以内）の場合のみ動作させる
+    if (window.scrollY <= 5) {
         startY = e.touches[0].clientY;
-        indicator.style.opacity = '0'; // 初期化
     } else {
         startY = 0; // スクロール中の場合は無効にする
     }
-}, { passive: true }); // パフォーマンス向上のため passive: true を使用
+}, { passive: true });
 
 document.addEventListener('touchmove', (e) => {
     if (startY === 0) return;
@@ -96,24 +95,25 @@ document.addEventListener('touchmove', (e) => {
     const currentY = e.touches[0].clientY;
     const distance = currentY - startY;
 
-    if (distance > 0 && window.scrollY === 0) {
-        // 下方向へのスワイプ
-        e.preventDefault(); // ブラウザ標準の動作を抑止（iOS PWAでは効かない可能性もあるが念のため）
-
+    // 下方向へのスワイプかつ、現在のスクロール位置が上端付近
+    if (distance > 0 && window.scrollY <= 5) {
         // インジケーターの表示/非表示を切り替え
         const opacity = Math.min(distance / PULL_THRESHOLD, 1);
         indicator.style.opacity = opacity;
 
-        // 少し引っ張っただけでは反応させない工夫
         if (distance > PULL_THRESHOLD) {
             indicator.textContent = '離すと更新';
-            indicator.style.backgroundColor = '#28a745'; // 色を変えて通知
+            indicator.style.backgroundColor = '#28a745'; // 到達したら緑色
         } else {
             indicator.textContent = '下に引いて更新';
-            indicator.style.backgroundColor = '#007bff';
+            indicator.style.backgroundColor = '#007bff'; // 途中は青色
         }
+    } else if (distance < 0) {
+        // 上方向にスワイプされたらキャンセル
+        indicator.style.opacity = '0';
+        startY = 0;
     }
-}, { passive: false }); // preventDefaultを使う可能性があるため passive: false
+}, { passive: true }); // iOS PWAのスクロールイベント特性を考慮してpassive: true
 
 document.addEventListener('touchend', (e) => {
     if (startY === 0) return;
@@ -125,7 +125,7 @@ document.addEventListener('touchend', (e) => {
     indicator.style.opacity = '0';
 
     // 規定の距離以上引っ張られていたらページをリロードする
-    if (distance > PULL_THRESHOLD) {
+    if (distance > PULL_THRESHOLD && window.scrollY <= 5) {
         window.location.reload();
     }
 
