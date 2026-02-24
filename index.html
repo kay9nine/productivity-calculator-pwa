@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +9,28 @@
     <meta name="theme-color" content="#007bff">
     <style>
         /* モバイルで見やすいシンプルなデザイン */
+        html,
+        body {
+            overscroll-behavior-y: none;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f0f2f5;
             margin: 0;
             padding: 20px;
             color: #333;
-            /* ブラウザ標準のプル・トゥ・リフレッシュを無効化 */
-            overscroll-behavior-y: none;
         }
+
         .container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             font-size: 18px;
             color: #444;
@@ -33,32 +39,38 @@
             margin-top: 0;
             margin-bottom: 15px;
         }
+
         .input-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
             font-size: 14px;
         }
+
         input {
             width: 100%;
             padding: 12px;
-            font-size: 16px; 
+            font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             background-color: #fafafa;
         }
+
         .time-input-group {
             display: flex;
-            gap: 10px; 
+            gap: 10px;
             margin-bottom: 15px;
         }
-        .time-input-group > div {
-            flex-basis: 50%; 
+
+        .time-input-group>div {
+            flex-basis: 50%;
         }
+
         /* 計算ボタン */
         button {
             width: 100%;
@@ -72,33 +84,34 @@
             cursor: pointer;
             margin-top: 10px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
         }
+
         button:active {
             background-color: #0056b3;
             transform: translateY(2px);
         }
-        
+
         /* === 結果エリアのスタイル === */
-        
+
         /* 結果の項目一つ分 */
         .result-item {
-            display: flex; 
-            justify-content: space-between; 
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             /* 背景色を追加しました */
-            background-color: #e9f5ff; 
-            padding: 15px; 
+            background-color: #e9f5ff;
+            padding: 15px;
             border-radius: 8px;
-            margin-bottom: 8px; 
+            margin-bottom: 8px;
         }
-        
+
         /* 項目名（左側） */
         .result-label {
             font-size: 16px;
             font-weight: bold;
             color: #555;
-            flex-shrink: 0; 
+            flex-shrink: 0;
         }
 
         /* 値（右側） */
@@ -108,6 +121,7 @@
             color: #007bff;
             text-align: right;
         }
+
         /* ================================== */
 
         /* === 独自リフレッシュ機能用スタイル === */
@@ -129,56 +143,58 @@
         }
     </style>
 </head>
+
 <body>
 
-<div id="refresh-indicator">離すと更新</div>
+    <div id="refresh-indicator">離すと更新</div>
 
-<div class="container">
-    <h1>売り上げ</h1>
-    
-    <div class="input-group">
-        <label for="amount">金額 (円)</label>
-        <input type="number" id="amount" inputmode="decimal" placeholder="例: 10000">
-    </div>
+    <div class="container">
+        <h1>売り上げ</h1>
 
-    <div class="time-input-group">
-        <div>
-            <label for="hours">時間 (h)</label>
-            <input type="number" id="hours" inputmode="numeric" pattern="[0-9]*" placeholder="例: 5">
+        <div class="input-group">
+            <label for="amount">金額 (円)</label>
+            <input type="number" id="amount" inputmode="decimal" placeholder="例: 10000">
         </div>
-        <div>
-            <label for="minutes">分 (min)</label>
-            <input type="number" id="minutes" inputmode="numeric" pattern="[0-9]*" placeholder="例: 30" max="59">
+
+        <div class="time-input-group">
+            <div>
+                <label for="hours">時間 (h)</label>
+                <input type="number" id="hours" inputmode="numeric" pattern="[0-9]*" placeholder="例: 5">
+            </div>
+            <div>
+                <label for="minutes">分 (min)</label>
+                <input type="number" id="minutes" inputmode="numeric" pattern="[0-9]*" placeholder="例: 30" max="59">
+            </div>
         </div>
+
+        <div class="input-group">
+            <label for="count">件数 (件)</label>
+            <input type="number" id="count" inputmode="numeric" pattern="[0-9]*" placeholder="例: 50">
+        </div>
+
+        <button onclick="calculate()">計算する</button>
+
+        <h1>生産性</h1>
+
+        <div class="result-item">
+            <span class="result-label">時間収益</span>
+            <span id="result-earnings" class="result-value">--- 円</span>
+        </div>
+
+        <div class="result-item">
+            <span class="result-label">時間当たり件数</span>
+            <span id="result-count" class="result-value">--- 件</span>
+        </div>
+
+        <div class="result-item">
+            <span class="result-label">単価 (1件あたり)</span>
+            <span id="result-unit-price" class="result-value">--- 円</span>
+        </div>
+
     </div>
 
-    <div class="input-group">
-        <label for="count">件数 (件)</label>
-        <input type="number" id="count" inputmode="numeric" pattern="[0-9]*" placeholder="例: 50">
-    </div>
-
-    <button onclick="calculate()">計算する</button>
-
-    <h1>生産性</h1>
-
-    <div class="result-item">
-        <span class="result-label">時間収益</span>
-        <span id="result-earnings" class="result-value">--- 円</span>
-    </div>
-    
-    <div class="result-item">
-        <span class="result-label">時間当たり件数</span>
-        <span id="result-count" class="result-value">--- 件</span>
-    </div>
-    
-    <div class="result-item">
-        <span class="result-label">単価 (1件あたり)</span>
-        <span id="result-unit-price" class="result-value">--- 円</span>
-    </div>
-    
-</div>
-
-<script src="./app.js"></script>
+    <script src="./app.js"></script>
 
 </body>
+
 </html>

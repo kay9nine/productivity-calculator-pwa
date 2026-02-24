@@ -87,7 +87,7 @@ document.addEventListener('touchstart', (e) => {
     } else {
         startY = 0; // スクロール中の場合は無効にする
     }
-}, { passive: true });
+}, { passive: false });
 
 document.addEventListener('touchmove', (e) => {
     if (startY === 0) return;
@@ -97,12 +97,15 @@ document.addEventListener('touchmove', (e) => {
 
     // 下方向へのスワイプかつ、現在のスクロール位置が上端付近
     if (distance > 0 && window.scrollY <= 5) {
+        // ブラウザ標準の引っ張り動作（回転アイコン）を抑止
+        if (e.cancelable) e.preventDefault();
+
         // インジケーターの表示/非表示を切り替え
         const opacity = Math.min(distance / PULL_THRESHOLD, 1);
         indicator.style.opacity = opacity;
 
         if (distance > PULL_THRESHOLD) {
-            indicator.textContent = '話すとデータをリセット';
+            indicator.textContent = '放すとデータをリセット';
             indicator.style.backgroundColor = '#dc3545'; // リセットを示す赤色系に変更
         } else {
             indicator.textContent = '下に引いてデータを消去';
@@ -113,7 +116,7 @@ document.addEventListener('touchmove', (e) => {
         indicator.style.opacity = '0';
         startY = 0;
     }
-}, { passive: true });
+}, { passive: false });
 
 document.addEventListener('touchend', (e) => {
     if (startY === 0) return;

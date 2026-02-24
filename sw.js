@@ -1,4 +1,4 @@
-const CACHE_NAME = 'productivity-calculator-v3'; // バージョンを v3 に更新して最新コードを適用
+const CACHE_NAME = 'productivity-calculator-v4'; // バージョンを v4 に更新して最新コードを適用
 const urlsToCache = [
   './',
   './index.html',
