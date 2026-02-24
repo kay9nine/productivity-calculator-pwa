@@ -102,18 +102,18 @@ document.addEventListener('touchmove', (e) => {
         indicator.style.opacity = opacity;
 
         if (distance > PULL_THRESHOLD) {
-            indicator.textContent = '離すと更新';
-            indicator.style.backgroundColor = '#28a745'; // 到達したら緑色
+            indicator.textContent = '話すとデータをリセット';
+            indicator.style.backgroundColor = '#dc3545'; // リセットを示す赤色系に変更
         } else {
-            indicator.textContent = '下に引いて更新';
-            indicator.style.backgroundColor = '#007bff'; // 途中は青色
+            indicator.textContent = '下に引いてデータを消去';
+            indicator.style.backgroundColor = '#007bff';
         }
     } else if (distance < 0) {
         // 上方向にスワイプされたらキャンセル
         indicator.style.opacity = '0';
         startY = 0;
     }
-}, { passive: true }); // iOS PWAのスクロールイベント特性を考慮してpassive: true
+}, { passive: true });
 
 document.addEventListener('touchend', (e) => {
     if (startY === 0) return;
@@ -124,8 +124,15 @@ document.addEventListener('touchend', (e) => {
     // インジケーターを非表示に戻す
     indicator.style.opacity = '0';
 
-    // 規定の距離以上引っ張られていたらページをリロードする
+    // 規定の距離以上引っ張られていたら全データを消去してリロード
     if (distance > PULL_THRESHOLD && window.scrollY <= 5) {
+        // 保存されている各入力値を削除
+        const inputIdsToClear = ['amount', 'hours', 'minutes', 'count'];
+        inputIdsToClear.forEach(id => {
+            localStorage.removeItem(`productivity_${id}`);
+        });
+
+        // ページをリロードして初期状態に戻す
         window.location.reload();
     }
 
