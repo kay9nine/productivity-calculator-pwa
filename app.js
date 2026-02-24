@@ -121,19 +121,35 @@ document.addEventListener('touchend', (e) => {
     const endY = e.changedTouches[0].clientY;
     const distance = endY - startY;
 
-    // インジケーターを非表示に戻す
-    indicator.style.opacity = '0';
-
-    // 規定の距離以上引っ張られていたら全データを消去してリロード
+    // 規定の距離以上引っ張られていたら全データを消去
     if (distance > PULL_THRESHOLD && window.scrollY <= 5) {
-        // 保存されている各入力値を削除
+        // 1. 視覚的・触覚的フィードバック
+        indicator.textContent = '初期化完了';
+        indicator.style.backgroundColor = '#28a745';
+        indicator.style.opacity = '1';
+        if (navigator.vibrate) navigator.vibrate(50);
+
+        // 2. データを即座にクリア
         const inputIdsToClear = ['amount', 'hours', 'minutes', 'count'];
         inputIdsToClear.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
             localStorage.removeItem(`productivity_${id}`);
         });
 
-        // ページをリロードして初期状態に戻す
-        window.location.reload();
+        // 結果表示もリセット
+        document.getElementById('result-earnings').textContent = '--- 円';
+        document.getElementById('result-count').textContent = '--- 件';
+        document.getElementById('result-unit-price').textContent = '--- 円';
+
+        // 3. 0.5秒後にリロードして完全に初期化を認識させる
+        setTimeout(() => {
+            indicator.style.opacity = '0';
+            window.location.reload();
+        }, 500);
+    } else {
+        // しきい値に達してなければそのまま隠す
+        indicator.style.opacity = '0';
     }
 
     startY = 0;
